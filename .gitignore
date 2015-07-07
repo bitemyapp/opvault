@@ -1,0 +1,9 @@
+# OSX is very annoying
+.DS_Store
+
+# Stack is kind of wonderful
+.stack-work/
+
+# No more swp files from vim
+*.swp
+

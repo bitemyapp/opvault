@@ -1,0 +1,7 @@
+flags: {}
+packages:
+    - '.'
+extra-deps:
+    - cryptonite-0.5
+resolver: lts-2.15
+
