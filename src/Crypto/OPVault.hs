@@ -1,92 +1,30 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Crypto.OPVault where
 
 import Prelude hiding (readFile)
 import Data.ByteString.Char8 (readFile)
 
 import Crypto.OPVault.Common
+import Crypto.OPVault.Encryption
+import Crypto.OPVault.Types
 
-data Profile = Profile
-    { pUuid          :: Text
-    , pCreatedAt     :: Int
-    , pUpdatedAt     :: Int
-    , pLastUpdatedBy :: Text
-    , pProfileName   :: Text
-    , pPasswordHint  :: Text
+result :: ResultT IO ()
+result = do
+    let path = "/home/crough/Dropbox/1Password/demo.opvault/default"
+    profile@Profile{..} <- fromJSON =<< io (readFile $ path ++ "/profile.js")
 
-    , pIterations    :: Int
-    , pMasterKey     :: Base64
-    , pOverviewKey   :: Base64
-    , pSalt          :: Base64
-    } deriving (Eq, Show)
+    let password = "demo"
+    let derKey   = derivedKey profile password
+    mk <- flip masterKey derKey =<< opdata pMasterKey
 
-instance FromJSON Profile where
-    parseJSON (Object obj) =
-        Profile                <$>
-        obj .: "uuid"          <*>
-        obj .: "createdAt"     <*>
-        obj .: "updatedAt"     <*>
-        obj .: "lastUpdatedBy" <*>
-        obj .: "profileName"   <*>
-        obj .: "passwordHint"  <*>
-        obj .: "iterations"    <*>
-        obj .: "masterKey"     <*>
-        obj .: "overviewKey"   <*>
-        obj .: "salt"
+    band0 <- fromJSON =<< io (readFile $ path ++ "/band_0.js")
+    let i@Item{..} = head $ toList (band0 :: ItemMap)
 
-data Folder = Folder
-    { fUUID     :: Text
-    , fCreated  :: Int
-    , fUpdated  :: Int
-    , fTx       :: Int
-    , fOverview :: Base64
-    }
-
-instance FromJSON Folder where
-    parseJSON (Object obj) =
-        Folder           <$>
-        obj .: "uuid"    <*>
-        obj .: "created" <*>
-        obj .: "updated" <*>
-        obj .: "tx"      <*>
-        obj .: "overview"
-
-data Item = Item
-    { iUUID     :: Text
-    , iFolder   :: Text
-    , iCategory :: Text
-    , iCreated  :: Int
-    , iUpdated  :: Int
-    , iTx       :: Int
-
-    , iHMAC     :: Base64
-    , iDetails  :: Base64
-    , iKey      :: Base64
-    , iOverview :: Base64
-    }
-
-instance FromJSON Item where
-    parseJSON (Object obj) =
-        Item              <$>
-        obj .: "uuid"     <*>
-        obj .: "folder"   <*>
-        obj .: "category" <*>
-        obj .: "created"  <*>
-        obj .: "updated"  <*>
-        obj .: "tx"       <*>
-        obj .: "hmac"     <*>
-        obj .: "d"        <*>
-        obj .: "k"        <*>
-        obj .: "o"
-
-type BandFile  = [Item]
-type FolderMap = HashMap Text Folder
+    io $ print iUUID
 
 main' :: IO ()
-main' = do
-    let path = "/home/crough/Dropbox/1Password/demo.opvault/default"
-    fs <- runResultT . fromJSON =<< readFile (path ++ "/folders.js")
-    case fs :: Either String FolderMap of
+main' = runResultT result >>= \x ->
+    case x of
       Left err -> putStrLn err
-      Right ok -> putStrLn "Parsed AOK!"
-
+      Right () -> putStrLn "\nDone!"

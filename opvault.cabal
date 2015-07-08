@@ -2,7 +2,7 @@ name:                opvault
 version:             0.1.0.0
 synopsis:            Decryption system for .opvault files
 description:         Please see README.md
-homepage:            http://github.com/crough/vault
+homepage:            http://github.com/crough/opvault
 license:             MPL-2.0
 license-file:        LICENSE
 author:              Alex Crough
@@ -16,8 +16,11 @@ library
   hs-source-dirs:      src
   exposed-modules:     Crypto.OPVault
                      , Crypto.OPVault.Common
+                     , Crypto.OPVault.Encryption
+                     , Crypto.OPVault.Types
   other-modules:       Crypto.OPVault.Common.Base64
                      , Crypto.OPVault.Common.JSFix
+                     , Crypto.OPVault.Common.Opdata01
                      , Crypto.OPVault.Common.ResultT
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
@@ -37,7 +40,7 @@ executable vaultist
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
   build-depends:       base
-                     , vault
+                     , opvault
 
 -- test-suite new-template-test
 --   type:                exitcode-stdio-1.0
@@ -50,4 +53,4 @@ executable vaultist
 
 source-repository head
   type:     git
-  location: https://github.com/crough/vault
+  location: https://github.com/crough/opvault

@@ -4,6 +4,7 @@ import Control.Applicative (Applicative(..))
 import Control.Monad ((<=<), liftM)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
+import Crypto.Error (CryptoFailable, eitherCryptoError)
 
 data ResultT m a = ResultT { runResultT :: m (Either String a) }
 
@@ -51,3 +52,9 @@ liftMaybe str _        = ResultT . return $ Left  str
 
 liftMaybeT :: (Applicative m, Monad m) => String -> m (Maybe a) -> ResultT m a
 liftMaybeT str = liftMaybe str <=< lift
+
+liftCrypto :: (Applicative m, Monad m) => CryptoFailable a -> ResultT m a
+liftCrypto c =
+    case eitherCryptoError c of
+      Left  l -> failure $ show l
+      Right r -> return r
