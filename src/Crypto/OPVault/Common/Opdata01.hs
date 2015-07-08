@@ -1,19 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Crypto.OPVault.Common.Opdata01
-    (Opdata01(..), opdata) where
+    (Opdata01(..), opdata, opDecrypt) where
 
 import Prelude hiding (drop, length, take)
 import Control.Applicative ((<$>))
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import Data.ByteString (ByteString, drop, length, take, unpack)
 
+import Crypto.Cipher.AES (AES256)
+import Crypto.Cipher.Types (cbcDecrypt, cipherInit, makeIV)
+
 import Crypto.OPVault.Common.Base64
 import Crypto.OPVault.Common.ResultT
 
 data Opdata01 = Opdata01
-    { oIV   :: ByteString
-    , oData :: ByteString
-    , oMAC  :: ByteString
+    { oIV     :: ByteString
+    , oPadLen :: Int
+    , oData   :: ByteString
+    , oMAC    :: ByteString
     }
 
 instance Show Opdata01 where
@@ -22,30 +27,30 @@ instance Show Opdata01 where
 opdata :: Monad m => Base64 -> ResultT m Opdata01
 opdata b64 = liftEither $ A.parseOnly opdataParser $ rawBytes b64
 
+opDecrypt :: Monad m => ByteString -> Opdata01 -> ResultT m ByteString
+opDecrypt key Opdata01{..} = do
+    ctx <- liftCrypto $ cipherInit key
+    iv  <- liftMaybe "Could not create initialization vector." $ makeIV oIV
+    return . drop oPadLen $ cbcDecrypt (ctx::AES256) iv oData
+
 opdataParser :: A.Parser Opdata01
 opdataParser = do
     _    <- A.string "opdata01"
-    len  <- littleEndian <$> A.take 8
+    len <- littleEndian <$> A.take 8
     iv   <- A.take 16
-    padding len
-    body <- A.take len
+    body <- A.take $ len + padSize len
     mac  <- A.take 32
     A.endOfInput
-    return $ Opdata01 iv body mac
+    return $ Opdata01 iv (padSize len) body mac
+
+padSize :: Int -> Int
+padSize len = aesBlockSize - len `mod` aesBlockSize
 
 
 littleEndian :: ByteString -> Int
 littleEndian =
     let pos = fmap (256^) [0..]
      in sum . zipWith (*) pos . fmap fromIntegral . unpack
-
-padding :: Int -> A.Parser ()
-padding len =
-    let r = len `mod` aesBlockSize
-     in do if r==0
-              then A.take aesBlockSize
-              else A.take r
-           return ()
 
 aesBlockSize :: Int
 aesBlockSize = 16

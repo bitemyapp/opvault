@@ -60,7 +60,7 @@ data Item = Item
 
     , iHMAC     :: Base64
     , iDetails  :: Base64
-    , iKey      :: Base64
+    , iEncKey   :: Base64
     , iOverview :: Base64
     }
 
