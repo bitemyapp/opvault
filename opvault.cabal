@@ -29,6 +29,8 @@ library
                      , base64-bytestring
                      , bytestring
                      , cryptonite
+                     , directory
+                     , exceptions
                      , memory
                      , text
                      , transformers

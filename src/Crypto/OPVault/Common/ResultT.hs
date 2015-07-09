@@ -1,7 +1,9 @@
+{-# LANGUAGE LambdaCase #-}
 module Crypto.OPVault.Common.ResultT where
 
 import Control.Applicative (Applicative(..))
 import Control.Monad ((<=<), liftM)
+import Control.Monad.Catch (MonadThrow(..))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Crypto.Error (CryptoFailable, eitherCryptoError)
@@ -36,8 +38,18 @@ instance MonadTrans ResultT where
 instance (Applicative m, MonadIO m) => MonadIO (ResultT m) where
     liftIO = ResultT . liftIO . fmap Right
 
+instance Monad m => MonadThrow (ResultT m) where
+    throwM e = failure (show e)
+
 failure :: Monad m => String -> ResultT m a
 failure = ResultT . return . Left
+
+catResults :: Monad m => [ResultT m a] -> m [a]
+catResults (r:rs) =
+    runResultT r >>=
+    \case Left _  -> catResults rs
+          Right x -> (x:) <$> catResults rs
+catResults [] = return []
 
 liftEither :: (Show s, Monad m) => Either s a -> ResultT m a
 liftEither (Left l)  = ResultT . return . Left $ show l

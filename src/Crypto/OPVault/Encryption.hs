@@ -3,8 +3,10 @@
 module Crypto.OPVault.Encryption where
 
 import Prelude hiding (drop, length, take)
-import Data.ByteString (drop, take)
+import Data.Aeson (decode)
 import Data.ByteArray (ByteArrayAccess, convert, length, View, view)
+import Data.ByteString (drop, take)
+import Data.ByteString.Lazy (fromStrict)
 import Data.String (IsString(..))
 import Data.Text.Encoding (encodeUtf8)
 
@@ -37,11 +39,18 @@ type SHA512' = View (Digest SHA512)
 data MasterKey = MasterKey
     { mKey :: ByteString
     , mMAC :: ByteString
-    , mIV  :: ByteString
     }
 
 instance Show MasterKey where
     show = const "MasterKey <...>"
+
+data OverviewKey = OverviewKey
+    { oKey :: ByteString
+    , oMAC :: ByteString
+    }
+
+instance Show OverviewKey where
+    show = const "OverviewKey <...>"
 
 data ItemKey = ItemKey
     { iKey :: ByteString
@@ -67,11 +76,19 @@ masterKey Profile{pMasterKey=mk} DerivedKey{..} = do
     op    <- opdata mk
     bytes <- opDecrypt dKey op
     let hashed = hash bytes :: Digest SHA512
-    if length bytes /= 256
-       then failure "Badly sized master key"
-       else return $ MasterKey (realize $ view hashed 0  32)
-                               (realize $ view hashed 32 32)
-                               (oIV op)
+    return $ MasterKey (realize $ view hashed 0  32)
+                       (realize $ view hashed 32 32)
+
+overviewKey :: Monad m => Profile -> DerivedKey -> ResultT m OverviewKey
+overviewKey Profile{pOverviewKey=ok} DerivedKey{..} = do
+    op    <- opdata ok
+    bytes <- opDecrypt dKey op
+    let hashed = hash bytes :: Digest SHA512
+    return $ OverviewKey (realize $ view hashed 0  32)
+                         (realize $ view hashed 32 32)
+
+folderOverview :: Monad m => Folder -> OverviewKey -> ResultT m ByteString
+folderOverview Folder{..} OverviewKey{..} = opDecrypt oKey =<< opdata fOverview
 
 itemKey :: (Applicative m, Monad m) => Item -> MasterKey -> ResultT m ItemKey
 itemKey Item{..} MasterKey{..} = do
@@ -86,5 +103,7 @@ itemKey Item{..} MasterKey{..} = do
     let bytes = cbcDecrypt (ctx :: AES256) iv' (realize dat)
     return $ ItemKey (realize $ view bytes 0 32) (realize $ view bytes 32 32)
 
-itemData :: (Applicative m, Monad m) => Item -> ItemKey -> ResultT m ByteString
-itemData Item{..} ItemKey{..} = opDecrypt iKey =<< opdata iDetails
+itemDetails :: (Applicative m, Monad m) => Item -> ItemKey -> ResultT m ItemDetails
+itemDetails Item{..} ItemKey{..} =
+    liftMaybe "Could not decode encrypted details." . decode . fromStrict =<<
+    opDecrypt iKey =<< opdata iDetails
