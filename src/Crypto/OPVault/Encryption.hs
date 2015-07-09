@@ -15,7 +15,6 @@ import Crypto.Cipher.Types (cbcDecrypt, cipherInit, makeIV)
 import Crypto.Hash (SHA512(..), Digest, hash)
 import Crypto.KDF.PBKDF2 (Parameters(..), generate, prfHMAC)
 
-import Crypto.OPVault.Common
 import Crypto.OPVault.Types
 
 newtype Password = Password ByteString

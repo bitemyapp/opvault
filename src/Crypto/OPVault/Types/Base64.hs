@@ -1,12 +1,12 @@
-module Crypto.OPVault.Common.Base64
+module Crypto.OPVault.Types.Base64
     ( Base64 (rawBytes)
     ) where
 
-import Control.Monad (mzero)
-import Data.Aeson (FromJSON(..), Value(String))
-import Data.ByteString.Char8 (ByteString, unpack)
+import Data.ByteString.Char8 (unpack)
 import qualified Data.ByteString.Base64 as B64 (encode, decode)
 import Data.Text.Encoding (encodeUtf8)
+
+import Crypto.OPVault.Types.Common
 
 newtype Base64 = Base64 { rawBytes :: ByteString } deriving Eq
 

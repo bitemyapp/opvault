@@ -1,18 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
-module Crypto.OPVault.Common.Opdata01
+module Crypto.OPVault.Types.Opdata01
     (Opdata01(..), opdata, opDecrypt) where
 
 import Prelude hiding (drop, length, take)
 import Control.Applicative ((<$>))
-import qualified Data.Attoparsec.ByteString.Char8 as A
+import qualified Data.Attoparsec.ByteString.Char8 as A (take, endOfInput, parseOnly, string, Parser)
 import Data.ByteString (ByteString, drop, length, take, unpack)
 
 import Crypto.Cipher.AES (AES256)
 import Crypto.Cipher.Types (cbcDecrypt, cipherInit, makeIV)
 
-import Crypto.OPVault.Common.Base64
-import Crypto.OPVault.Common.ResultT
+import Crypto.OPVault.Types.Base64
+import Crypto.OPVault.Types.ResultT
 
 data Opdata01 = Opdata01
     { oIV     :: ByteString
