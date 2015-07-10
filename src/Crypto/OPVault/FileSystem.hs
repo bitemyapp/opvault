@@ -1,10 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 module Crypto.OPVault.FileSystem
     ( getItems
     , getDefaultVault
     , getFolderFile
     , getVault
+    , IndexKey(..)
+    , makeItemIndex
+    , itemLookup
     ) where
 
 import Prelude hiding (readFile)
@@ -19,10 +23,12 @@ import qualified Data.ByteString.Char8 as B (readFile)
 import Data.ByteString.Lazy (fromStrict)
 import Data.Char (chr)
 import Data.Foldable (foldl')
-import qualified Data.HashMap.Strict as HM (union, empty)
+import Data.Hashable (Hashable(..))
+import qualified Data.HashMap.Strict as HM (union, toList, fromList, empty, lookup)
 import Data.Maybe (catMaybes)
 import System.Environment (lookupEnv)
 
+import Crypto.OPVault.Encryption
 import Crypto.OPVault.Types
 
 parseProfile :: Parser ByteString
@@ -80,9 +86,9 @@ bandFiles :: Vault -> [FilePath]
 bandFiles (VaultPath p) = fmap structure "0123456789ABCDEF"
     where structure x = concat [p, "/band_", [x], ".js"]
 
-getItems :: MonadIO m => Vault -> ResultT m [Item]
+getItems :: MonadIO m => Vault -> ResultT m ItemMap
 getItems vault =
     let files  = readFiles' $ bandFiles vault
         reader = sequence . fmap fromJSON
         runner = join . io . runConcurrently
-    in runner $ reader <$> files
+    in fmap (foldl' HM.union HM.empty) . runner $ reader <$> files

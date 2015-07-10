@@ -15,10 +15,10 @@ import Crypto.OPVault.Types.Base64
 import Crypto.OPVault.Types.ResultT
 
 data Opdata01 = Opdata01
-    { oIV     :: ByteString
-    , oPadLen :: Int
-    , oData   :: ByteString
-    , oMAC    :: ByteString
+    { opIV     :: ByteString
+    , opPadLen :: Int
+    , opData   :: ByteString
+    , opMAC    :: ByteString
     }
 
 instance Show Opdata01 where
@@ -30,13 +30,13 @@ opdata b64 = liftEither $ A.parseOnly opdataParser $ rawBytes b64
 opDecrypt :: Monad m => ByteString -> Opdata01 -> ResultT m ByteString
 opDecrypt key Opdata01{..} = do
     ctx <- liftCrypto $ cipherInit key
-    iv  <- liftMaybe "Could not create initialization vector." $ makeIV oIV
-    return . drop oPadLen $ cbcDecrypt (ctx::AES256) iv oData
+    iv  <- liftMaybe "Could not create initialization vector." $ makeIV opIV
+    return . drop opPadLen $ cbcDecrypt (ctx::AES256) iv opData
 
 opdataParser :: A.Parser Opdata01
 opdataParser = do
     _    <- A.string "opdata01"
-    len <- littleEndian <$> A.take 8
+    len  <- littleEndian <$> A.take 8
     iv   <- A.take 16
     body <- A.take $ len + padSize len
     mac  <- A.take 32
@@ -45,7 +45,6 @@ opdataParser = do
 
 padSize :: Int -> Int
 padSize len = aesBlockSize - len `mod` aesBlockSize
-
 
 littleEndian :: ByteString -> Int
 littleEndian =

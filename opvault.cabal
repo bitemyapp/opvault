@@ -20,6 +20,7 @@ library
                      , Crypto.OPVault.Types
   other-modules:       Crypto.OPVault.Types.Base64
                      , Crypto.OPVault.Types.Common
+                     , Crypto.OPVault.Types.Encryption
                      , Crypto.OPVault.Types.FileTypes
                      , Crypto.OPVault.Types.Opdata01
                      , Crypto.OPVault.Types.ResultT
@@ -33,6 +34,7 @@ library
                      , cryptonite
                      , directory
                      , exceptions
+                     , hashable
                      , memory
                      , text
                      , transformers

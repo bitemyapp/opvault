@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes        #-}
 module Crypto.OPVault where
 
+import Crypto.OPVault.Encryption
 import Crypto.OPVault.FileSystem
 import Crypto.OPVault.Types
 

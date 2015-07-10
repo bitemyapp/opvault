@@ -9,7 +9,9 @@ module Crypto.OPVault.Types
 
 import Crypto.OPVault.Types.Base64     as Common
 import Crypto.OPVault.Types.Common     as Common
+import Crypto.OPVault.Types.Encryption as Common
 import Crypto.OPVault.Types.FileTypes  as Common
+import Crypto.OPVault.Types.ItemIndex  as Common
 import Crypto.OPVault.Types.Opdata01   as Common
 import Crypto.OPVault.Types.ResultT    as Common
 
