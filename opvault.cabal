@@ -22,6 +22,7 @@ library
                      , Crypto.OPVault.Types.Common
                      , Crypto.OPVault.Types.Encryption
                      , Crypto.OPVault.Types.FileTypes
+                     , Crypto.OPVault.Types.ItemIndex
                      , Crypto.OPVault.Types.Opdata01
                      , Crypto.OPVault.Types.ResultT
   default-language:    Haskell2010
@@ -40,14 +41,18 @@ library
                      , transformers
                      , unordered-containers
 
-executable cellardoor
+executable opv-cli-interactive
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
   build-depends:       base
+                     , bytestring
                      , opvault
+                     , text
+                     , transformers
 
+-- Please do this soon, Alex.
 -- test-suite new-template-test
 --   type:                exitcode-stdio-1.0
 --   hs-source-dirs:      test

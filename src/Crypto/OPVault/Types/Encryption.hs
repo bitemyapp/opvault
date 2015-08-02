@@ -21,24 +21,24 @@ instance Show DerivedKey where
     show = const "DerivedKey <...>"
 
 data MasterKey = MasterKey
-    { mKey :: ByteString
-    , mMAC :: ByteString
+    { mKey :: !ByteString
+    , mMAC :: !ByteString
     }
 
 instance Show MasterKey where
     show = const "MasterKey <...>"
 
 data OverviewKey = OverviewKey
-    { oKey :: ByteString
-    , oMAC :: ByteString
+    { oKey :: !ByteString
+    , oMAC :: !ByteString
     }
 
 instance Show OverviewKey where
     show = const "OverviewKey <...>"
 
 data ItemKey = ItemKey
-    { iKey :: ByteString
-    , iMAC :: ByteString
+    { iKey :: !ByteString
+    , iMAC :: !ByteString
     }
 
 instance Show ItemKey where

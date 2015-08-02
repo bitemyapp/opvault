@@ -18,10 +18,9 @@ instance Monad m => Applicative (ResultT m) where
         fn <- runResultT resFn
         x  <- runResultT resX
         case (fn, x) of
-          (Left errFn, Left errX) -> return . Left  $ concat [errFn, "\n", errX]
           (Right fn',  Right x')  -> return . Right $ fn' x'
-          (Left errFn, Right _)   -> return $ Left errFn
-          (Right _,    Left errX) -> return $ Left errX
+          (Left x, _) -> return $ Left x
+          (_, Left x) -> return $ Left x
 
 instance Monad m => Monad (ResultT m) where
     return    = pure
@@ -39,6 +38,12 @@ instance MonadIO m => MonadIO (ResultT m) where
 
 instance Monad m => MonadThrow (ResultT m) where
     throwM e = failure (show e)
+
+doResult :: ResultT IO () -> IO ()
+doResult x =
+    runResultT x >>=
+    \case Left x   -> putStrLn x
+          Right () -> return ()
 
 failure :: Monad m => String -> ResultT m a
 failure = ResultT . return . Left

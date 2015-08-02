@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE PartialTypeSignatures #-}
 module Crypto.OPVault.FileSystem
     ( getItems
-    , getDefaultVault
     , getFolderFile
     , getVault
     , IndexKey(..)
@@ -67,11 +65,6 @@ dropLeft (Right x) = Just x
 readFiles' :: [FilePath] -> Concurrently [ByteString]
 readFiles' = fmap catMaybes . foldr fn (pure [])
     where fn p acc = (:) <$> Concurrently (dropLeft <$> readFile' p) <*> acc
-
-getDefaultVault :: MonadIO m => ResultT m (Vault, Profile)
-getDefaultVault = do
-    opwDir <- liftMaybeT "Could not find HOME path in enviornment" (io $ lookupEnv "HOME")
-    getVault . VaultPath $ opwDir ++ "/Dropbox/1Password/1Password.opvault/default"
 
 getVault :: MonadIO m => Vault -> ResultT m (Vault, Profile)
 getVault (VaultPath p) = do

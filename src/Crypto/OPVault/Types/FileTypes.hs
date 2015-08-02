@@ -2,6 +2,8 @@
 module Crypto.OPVault.Types.FileTypes where
 
 import Data.Aeson (FromJSON(..), Value(..), (.:))
+import Data.Aeson.Types (Parser)
+import Data.Maybe (fromMaybe)
 
 import Crypto.OPVault.Types.Base64
 import Crypto.OPVault.Types.Common
@@ -80,15 +82,13 @@ instance FromJSON Item where
 data ItemDetails = ItemDetails
     { iBackupKeys :: [Base64]
     , iFields     :: [ItemField]
-    , iSections   :: [ItemSection]
     } deriving (Show, Eq)
 
 instance FromJSON ItemDetails where
     parseJSON (Object obj) =
         ItemDetails         <$>
-        obj .: "backupKeys" <*>
-        obj .: "fields"     <*>
-        obj .: "sections"
+        obj .~ "backupKeys" <*>
+        obj .: "fields"
     parseJSON _ = mzero
 
 data ItemSection = ItemSection
@@ -104,8 +104,7 @@ instance FromJSON ItemSection where
     parseJSON _ = mzero
 
 data ItemField = ItemField
-    { iDesignation :: Text
-    , iName        :: Text
+    { iFieldId     :: Text
     , iType        :: FieldType
     , iValue       :: Text
     } deriving (Show, Eq)
@@ -113,20 +112,24 @@ data ItemField = ItemField
 instance FromJSON ItemField where
     parseJSON (Object obj) =
         ItemField            <$>
-        obj .: "designation" <*>
-        obj .: "name"        <*>
+        obj .: "id"          <*>
         obj .: "type"        <*>
         obj .: "value"
     parseJSON _ = mzero
 
-data FieldType = UsernameField | PasswordField deriving (Show, Eq)
+data FieldType = EmailField | UsernameField | PasswordField | Unknown deriving (Show, Eq)
 
 instance FromJSON FieldType where
-    parseJSON (String s) = case s of
-        "T" -> return UsernameField
-        "P" -> return PasswordField
-        _   -> mzero
+    parseJSON (String s) = return $ case s of
+        "E" -> EmailField
+        "T" -> UsernameField
+        "P" -> PasswordField
+        _   -> Unknown
     parseJSON _ = mzero
 
 type ItemMap = HashMap Text Item
 type FolderMap = HashMap Text Folder
+
+(.~) :: FromJSON a => Object -> Text -> Parser [a]
+obj .~ key =
+    fromMaybe [] <$> obj .:? key

@@ -3,6 +3,7 @@
 module Crypto.OPVault.Encryption
     ( derivedKey
     , masterKey
+    , overviewKey
     , folderOverview
     , itemKey
     , itemOverview
@@ -13,7 +14,7 @@ module Crypto.OPVault.Encryption
 import Prelude hiding (drop, length, take)
 import Data.Aeson (decode)
 import Data.ByteArray (ByteArrayAccess, convert, length, View, view)
-import Data.ByteString (drop, take)
+import Data.ByteString (length, drop, take)
 import Data.ByteString.Lazy (fromStrict)
 import qualified Data.HashMap.Strict as HM (fromList, toList)
 import Data.Hashable (Hashable)
@@ -58,13 +59,13 @@ overviewKey Profile{pOverviewKey=ok} DerivedKey{..} = do
 folderOverview :: Monad m => Folder -> OverviewKey -> ResultT m ByteString
 folderOverview Folder{..} OverviewKey{..} = opDecrypt oKey =<< opdata fOverview
 
-itemKey :: Monad m => Item -> MasterKey -> ResultT m ItemKey
+itemKey :: MonadIO m => Item -> MasterKey -> ResultT m ItemKey
 itemKey Item{..} MasterKey{..} = do
     let raw  = rawBytes iEncKey
 
     let iv   = view raw 0  16
     let dat  = view raw 16 64
-    let mac  = view raw 64 32
+    let mac  = view raw 80 32
 
     ctx <- liftCrypto $ cipherInit mKey
     iv' <- liftMaybe "Could not create IV" $ makeIV iv
@@ -80,7 +81,8 @@ itemOverview Item{..} OverviewKey{..} = do
 itemDetails :: Monad m => Item -> ItemKey -> ResultT m ItemDetails
 itemDetails Item{..} ItemKey{..} =
     liftMaybe "Could not decode encrypted details." . decode . fromStrict =<<
-    opDecrypt iKey =<< opdata iDetails
+    opDecrypt iKey =<<
+    opdata iDetails
 
 flipAssoc :: (Eq v, Hashable v) => [(k, Object)] -> (Text -> v) -> Text ->  HashMap v k
 flipAssoc mapList wrap innerKey =
