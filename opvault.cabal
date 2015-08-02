@@ -40,7 +40,7 @@ library
                      , transformers
                      , unordered-containers
 
-executable vaultist
+executable cellardoor
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
